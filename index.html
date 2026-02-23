@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Survey Live Counter</title>
+
+<style>
+body {
+  background: #0a0a0f;
+  color: #00ff88;
+  font-family: "Courier New", monospace;
+  padding: 40px;
+}
+
+h1 {
+  color: #00ffaa;
+  text-shadow: 0 0 10px #00ff88;
+}
+
+.blink {
+  animation: blink 1s infinite;
+}
+
+@keyframes blink {
+  50% { opacity: 0; }
+}
+
+.section {
+  margin-top: 25px;
+  font-size: 18px;
+}
+
+.number {
+  font-size: 26px;
+  font-weight: bold;
+  text-shadow: 0 0 8px #00ff88;
+  margin-top: 8px;
+  margin-bottom: 18px;
+}
+
+.progress-container {
+  margin-top: 20px;
+  background: #111;
+  border: 1px solid #00ff88;
+  height: 25px;
+  width: 100%;
+}
+
+.progress-bar {
+  height: 100%;
+  width: 0%;
+  transition: width 0.5s ease;
+}
+
+.status {
+  margin-top: 15px;
+  font-size: 20px;
+  font-weight: bold;
+}
+</style>
+</head>
+<body>
+
+<div id="terminal"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+/* ---------------- TERMINAL BUILD ---------------- */
+
+const terminal = document.getElementById("terminal");
+
+const layout = `
+<h1>> SURVEY LIVE COUNTER</h1>
+<div>> Created by: Ger</div>
+<div>> Programmed in HTML, CSS, JS</div>
+<div>> Live Data Sync: Firebase Realtime Database</div>
+<div>> Data Collection: Google Forms</div>
+
+<div>> System Status: <span class="blink">ONLINE</span></div>
+
+<div class="section">
+  > Total Respons Masuk:<br>
+  <div class="number" id="total">0</div>
+</div>
+
+<div class="section">
+  > Sisa Menuju Validitas (75 respons):<br>
+  <div class="number" id="remaining">75</div>
+</div>
+
+<div class="section">
+  > Progres Total Populasi (dari 106):
+  <div class="number" id="totalPercent">0%</div>
+</div>
+
+<div class="section">
+  > Progres Validitas (dari 75):
+  <div class="number" id="validityPercent">0%</div>
+</div>
+
+<div>> Progres Validitas (target: 75):</div>
+
+<div class="progress-container">
+  <div class="progress-bar" id="progressBar"></div>
+</div>
+
+<div class="status" id="statusText">> STATUS: MENGUMPULKAN DATA</div>
+`;
+
+let i = 0;
+
+function typeLayout() {
+  if (i < layout.length) {
+    terminal.innerHTML = layout.substring(0, i);
+    i++;
+    setTimeout(typeLayout, 3);
+  } else {
+    initializeFirebase();
+  }
+}
+
+typeLayout();
+
+/* ---------------- FIREBASE ---------------- */
+
+function initializeFirebase() {
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAJ-_z6rCtxlrTHaQM6oaRrDlnpgUri9tE",
+  authDomain: "kartulprogress.firebaseapp.com",
+  databaseURL: "https://kartulprogress-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "kartulprogress",
+  storageBucket: "kartulprogress.firebasestorage.app",
+  messagingSenderId: "177206406482",
+  appId: "1:177206406482:web:32ba1975644f4bd3719e8b"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+const totalStudents = 106;
+const requiredCount = Math.ceil(totalStudents * 0.7); // = 75
+
+function animateValue(id, start, end, duration) {
+  if (start === end) {
+    document.getElementById(id).innerText = end;
+    return;
+  }
+
+  let range = end - start;
+  let current = start;
+  let increment = end > start ? 1 : -1;
+  let stepTime = Math.abs(Math.floor(duration / Math.abs(range)));
+
+  let obj = document.getElementById(id);
+
+  let timer = setInterval(function () {
+    current += increment;
+    obj.innerText = current;
+    if (current == end) {
+      clearInterval(timer);
+    }
+  }, stepTime);
+}
+
+const counterRef = ref(db, "submissions");
+
+onValue(counterRef, (snapshot) => {
+
+  const submissionCount = snapshot.val() || 0;
+
+  const remaining = Math.max(requiredCount - submissionCount, 0);
+  const validityPercent = Math.min((submissionCount / requiredCount) * 100, 100);
+  const totalPercent = ((submissionCount / totalStudents) * 100).toFixed(1);
+  const totalPercentRaw = (submissionCount / totalStudents) * 100;
+
+  animateValue("total", 0, submissionCount, 500);
+
+  document.getElementById("remaining").innerText = remaining;
+  document.getElementById("totalPercent").innerText = totalPercent + "%";
+  document.getElementById("validityPercent").innerText = validityPercent.toFixed(1) + "%";
+
+  const bar = document.getElementById("progressBar");
+  bar.style.width = validityPercent + "%";
+  updateProgressColor(validityPercent);
+
+  let statusText, statusColor;
+
+  if (totalPercentRaw >= 100) {
+    statusText = "> STATUS: MISSION PASSED! R. I. C. C. I. +";
+    statusColor = "#00ff88";
+  } else if (totalPercentRaw >= 99) {
+    statusText = "> STATUS: LAST PERSON 👀";
+    statusColor = "#00ff88";
+  } else if (totalPercentRaw >= 98) {
+    statusText = "> STATUS: WE ARE SO CLOSE";
+    statusColor = "#00ff88";
+  } else if (totalPercentRaw >= 95) {
+    statusText = "> STATUS: KEEP GOING I GUESS";
+    statusColor = "#00ff88";
+  } else if (totalPercentRaw >= 92) {
+    statusText = "> STATUS: OKAY SURE";
+    statusColor = "#00ff88";
+  } else if (totalPercentRaw >= 91) {
+    statusText = "> STATUS: WHY?";
+    statusColor = "#00ff88";
+  } else if (totalPercentRaw >= 90) {
+    statusText = "> STATUS: REALLY?";
+    statusColor = "#00ff88";
+  } else if (totalPercentRaw >= 80) {
+    statusText = "> STATUS: DATA SO MUCH MORE THAN REQUIRED";
+    statusColor = "#00ff88";
+  } else if (totalPercentRaw >= 71) {
+    statusText = "> STATUS: DATA MORE THAN REQUIRED";
+    statusColor = "#00ff88";
+  } else if (totalPercentRaw >= 70) {
+    statusText = "> STATUS: DATA COMPLETE";
+    statusColor = "#00ff88";
+  } else if (totalPercentRaw >= 69) {
+    statusText = "> STATUS: 1 MORE RESPONSE";
+    statusColor = "#ffaa00";
+  } else if (totalPercentRaw >= 68) {
+    statusText = "> STATUS: WE GOT PAST 67%";
+    statusColor = "#ffaa00";
+  } else if (totalPercentRaw >= 67) {
+    statusText = "> STATUS: 67... 😭";
+    statusColor = "#ff4444";
+  } else if (totalPercentRaw >= 52.5) {
+    statusText = "> STATUS: THREE QUARTERS THROUGH";
+    statusColor = "#00ff88";
+  } else if (totalPercentRaw >= 35) {
+    statusText = "> STATUS: DATA HALFWAY";
+    statusColor = "#00ff88";
+  } else if (totalPercentRaw >= 17.5) {
+    statusText = "> STATUS: ONE QUARTER THROUGH";
+    statusColor = "#00ff88";
+  } else {
+    statusText = "> STATUS: COLLECTING DATA";
+    statusColor = "#00ff88";
+  }
+
+  const status = document.getElementById("statusText");
+  status.innerText = statusText;
+  status.style.color = statusColor;
+});
+
+function updateProgressColor(percent) {
+  const bar = document.getElementById("progressBar");
+
+  let r, g;
+
+  if (percent <= 50) {
+    r = 255;
+    g = Math.round((percent / 50) * 255);
+  } else {
+    r = Math.round(255 - ((percent - 50) / 50) * 255);
+    g = 255;
+  }
+
+  bar.style.backgroundColor = `rgb(${r}, ${g}, 0)`;
+}
+
+}
+</script>
+
+</body>
+</html>
