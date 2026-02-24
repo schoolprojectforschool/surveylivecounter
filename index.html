@@ -86,21 +86,21 @@ const layout = `
 </div>
 
 <div class="section">
-  > Sisa Menuju Validitas (75 respons):<br>
-  <div class="number" id="remaining">75</div>
+  > Sisa Menuju Validitas (76 respons):<br>
+  <div class="number" id="remaining">76</div>
 </div>
 
 <div class="section">
-  > Progres Total Populasi (dari 106 respons):
+  > Progres Total Populasi (dari 108 respons):
   <div class="number" id="totalPercent">0%</div>
 </div>
 
 <div class="section">
-  > Progres Validitas (dari 75 respons):
+  > Progres Validitas (dari 76 respons):
   <div class="number" id="validityPercent">0%</div>
 </div>
 
-<div>> Progres Validitas (target: 75 respons):</div>
+<div>> Progres Validitas (target: 76 respons):</div>
 
 <div class="progress-container">
   <div class="progress-bar" id="progressBar"></div>
@@ -140,8 +140,8 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-const totalStudents = 106;
-const requiredCount = Math.ceil(totalStudents * 0.7); // = 75
+const totalStudents = 108;
+const requiredCount = Math.ceil(totalStudents * 0.7); // = 76
 
 function animateValue(id, start, end, duration) {
   if (start === end) {
