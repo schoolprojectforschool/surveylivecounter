@@ -230,6 +230,9 @@ onValue(counterRef, (snapshot) => {
   } else if (totalPercentRaw >= 52.5) {
     statusText = "> STATUS: THREE QUARTERS THROUGH";
     statusColor = "#00ff88";
+  } else if (totalPercentRaw >= 38) {
+    statusText = "> STATUS: DATA MORE THAN HALFWAY";
+    statusColor = "#00ff88";
   } else if (totalPercentRaw >= 35) {
     statusText = "> STATUS: DATA HALFWAY";
     statusColor = "#00ff88";
@@ -268,3 +271,4 @@ function updateProgressColor(percent) {
 </body>
 
 </html>
+
